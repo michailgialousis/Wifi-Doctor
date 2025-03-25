@@ -1,5 +1,14 @@
 import pandas as pd
 
+"""
+Density Metrics:
+1)Beacon Jitter
+2)Overlapping Channels given a strong RSSI(capable of interference)
+3)RBSSID source paper [3] (RSSID)
+4)PHY type percentage (old phy types may create congestion)
+
+"""
+
 def beacon_jitter_intervals(csv_file, nominal_interval=0.100):
     """
     Reads the CSV file, filters for beacon frames, and computes beacon intervals and jitter values.
