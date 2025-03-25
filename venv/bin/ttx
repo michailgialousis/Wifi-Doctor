@@ -1,4 +1,4 @@
-#!/home/moike/Wifi-Doctor/venv/bin/python3
+#!/home/axynobiti/Wifi-Doctor/venv/bin/python3
 # -*- coding: utf-8 -*-
 import re
 import sys
