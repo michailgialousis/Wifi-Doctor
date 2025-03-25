@@ -98,7 +98,7 @@ def rssi_based_overlap_index(csv_file, rssi_threshold=-70):
      print(" No APs with RSSI above threshold were found")
      pass
 
-    # Determine band
+    # Determine band (helper function-)---------------------------------------------------
     def get_band(ch):
         if 1 <= ch <= 14:
             return '2.4GHz'
@@ -106,10 +106,13 @@ def rssi_based_overlap_index(csv_file, rssi_threshold=-70):
             return '5GHz'
         else:
             return 'unknown'
+    #-----------------------------------------------------------------------------------
+
 
     avg_rssi_df['band'] = avg_rssi_df['channel'].apply(get_band)
 
-    # overlap logic
+    
+    # overlap logic (helper function)--------------------------------------------------------
     def get_overlapping_channels(ch, band):
         if band == '2.4GHz':
             if 1 <= ch <= 5:
@@ -126,6 +129,7 @@ def rssi_based_overlap_index(csv_file, rssi_threshold=-70):
             return [ch]  
         else:
             return []
+    #----------------------------------------------------------------------------------------
 
     overlap_data = []
 
@@ -134,13 +138,14 @@ def rssi_based_overlap_index(csv_file, rssi_threshold=-70):
         ch = int(row['channel'])
         rssi = row['signal_strength']
         band = row['band']
-
+        
+        # get the list of overlapping channels (using helper function)
         overlapping_channels = get_overlapping_channels(ch, band)
 
         overlapping_aps = avg_rssi_df[
-            (avg_rssi_df['bssid'] != bssid) &
-            (avg_rssi_df['band'] == band) &
-            (avg_rssi_df['channel'].isin(overlapping_channels))
+            (avg_rssi_df['bssid'] != bssid) & # don't compare AP to it's self
+            (avg_rssi_df['band'] == band) & # check only the AP's band (2.4 or 5)
+            (avg_rssi_df['channel'].isin(overlapping_channels)) # only include APs on channels that overlap with the current AP’s channel
         ]
 
         overlap_data.append({
