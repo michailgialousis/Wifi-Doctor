@@ -2,8 +2,7 @@ import pyshark
 import pandas as pd
 import datetime
 
-pcap_file = '/home/axynobiti/Downloads/2.4_tuc_pavlos.pcapng'
-
+pcap_file = '/home/axynobiti/Downloads/riverwest_24.pcapng'
 # helper functions
 def get_field(layer, attr):
     try:
@@ -19,11 +18,16 @@ def get_raw_field(packet, layername, key):
 
 # Store parsed data here
 packet_data = []
+unique_fields = set()
+
 
 try:
     cap = pyshark.FileCapture(pcap_file, only_summaries=False, use_json=False)
 
     for i, packet in enumerate(cap):
+        
+        if i >= 30000:
+         break
 
         # Special treatment for timestamp otherwise it doesnt recognize fixed_timestamp from layer wlan.mgt
         tsf_timestamp = None
@@ -34,7 +38,8 @@ try:
                     tsf_timestamp = tsf
         except Exception:
             pass
-
+        
+       
 
 
         # Building the packet dictionary
@@ -49,11 +54,12 @@ try:
             "channel": get_field(getattr(packet, 'wlan_radio', None), 'channel'),
             "frequency": get_field(getattr(packet, 'wlan_radio', None), 'frequency'),
             "phy": get_field(getattr(packet, 'wlan_radio', None), 'phy'),
+            "retry": get_field(getattr(packet, 'wlan', None), 'fc_retry'),
+            "data_rate": get_field(getattr(packet, 'wlan_radio', None), 'data_rate'),
             "short_gi": get_field(getattr(packet, 'radiotap', None), 'flags_shortgi'),
             "signal_strength": get_field(getattr(packet, 'wlan_radio', None), 'signal_dbm'),
-            "bandwidth": get_field(getattr(packet, 'radiotap', None), 'channel_flags'),
+            "bandwidth": get_raw_field(packet, 'wlan_radio', 'wlan_radio.11ac.bandwidth'),
             "mcs_index": get_raw_field(packet, 'radiotap', 'radiotap.mcs.index'),
-            "spatial_streams_tx_max": get_field(getattr(packet, 'wlan_mgt', None), 'wlan_ht_mcsset_txmaxss'), #NOT FOUND YET
             "tsf_timestamp": tsf_timestamp, # in wireshark its inside wifi manager its the APs timestamp 
             "timestamp_wireshark" : float(packet.frame_info.time_epoch), # for beacon jitter!!!
         }
