@@ -264,16 +264,86 @@ def phy_percentage(csv_file):
 
     return phy_counts
 
+def jitter_tot_avg(result_df):
+    """
+    Computes the average jitter value for all BSSIDs provided the DataFrame.
+
+    Parameters:
+        csv_file (str): Path to the CSV file.
+        result_df (DataFrame): DataFrame containing jitter values for each BSSID.
+
+    Returns:
+        DataFrame: A summary with:
+            - avg_jitter_s (float): The average jitter in seconds.
+            - avg_jitter_ms (float): The average jitter in milliseconds.
+    """
+    # Ensure the DataFrame contains the necessary columns
+    if 'jitter_s' not in result_df.columns or 'jitter_ms' not in result_df.columns:
+        raise ValueError("The result DataFrame must contain 'jitter_s' and 'jitter_ms' columns.")
+
+    # Compute the average jitter in seconds and milliseconds
+    avg_jitter_s = result_df['jitter_s'].mean()
+    avg_jitter_ms = result_df['jitter_ms'].mean()
+    med_avg_jitter_s = result_df['jitter_s'].median()
+    med_avg_jitter_ms = result_df['jitter_ms'].median()
+
+    # Create a summary DataFrame
+    summary_df = pd.DataFrame({
+        'avg_jitter_s': [avg_jitter_s],
+        'avg_jitter_ms': [avg_jitter_ms],
+        'med_avg_jitter_s': [med_avg_jitter_s],
+        'med_avg_jitter_ms': [med_avg_jitter_ms]
+    })
+
+    print("Average Jitter Summary:")
+    print(summary_df)
+
+    return summary_df
+
+def overlap_tot_avg(result_df):
+    """
+    Computes the average overlap index for all channels and bands.
+
+    Parameters:
+        result_df (DataFrame): DataFrame containing overlap index values for each channel and band.
+
+    Returns:
+        DataFrame: A summary with:
+            - avg_overlap_index (float): The average overlap index.
+    """
+    # Ensure the DataFrame contains the necessary columns
+    if 'avg_overlap_index' not in result_df.columns:
+        raise ValueError("The result DataFrame must contain 'avg_overlap_index' column.")
+
+    # Compute the average overlap index
+    avg_overlap_index = result_df['avg_overlap_index'].mean()
+    
+    # Create a summary DataFrame
+    summary_df = pd.DataFrame({
+        'avg_overlap_index': [avg_overlap_index]
+    })
+
+    print("Average Overlap Index Summary:")
+    print(summary_df)
+
+    return summary_df
+
+
+    
+
 if __name__ == "__main__":
     # Calling the functions created above
-    input_csv = '2.4_home.csv'
-    input_csv_single_channel = '2.4_home_one.csv'
+    input_csv = '5_riverwest.csv'
+    input_csv_single_channel = '5_home_one.csv'
 
     print("\n== Beacon Jitter ==\n")
     beacon_jitter_df = beacon_jitter_intervals(input_csv_single_channel)
+    jitter_tot_avg(beacon_jitter_df)
+    
 
     print("\n== RSSI-Based Overlap Index ==\n")
     overlap_df, channel_summary = rssi_based_overlap_index(input_csv)
+    overlap_tot_avg(channel_summary)
 
     print("\n== RSSID ==\n")
     rssid_by_ap, total_rssid = compute_rssid_from_csv(input_csv)
