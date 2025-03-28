@@ -65,7 +65,7 @@ def beacon_jitter_intervals(csv_file, nominal_interval=0.100):
     result_df = pd.concat(results)
     
     # Print the resulting DataFrame
-    print("\nBeacon interval and jitter values:")
+    print("Beacon interval and jitter values:")
     print(result_df)
     
     return result_df
@@ -91,23 +91,24 @@ def rssi_based_overlap_index(csv_file, rssi_threshold=-70):
 
     # Filter for beacon frames and get fields from csv file
     df_beacons = df[df['fc_type_subtype'] == "0x0008"].copy()
+    # Remove any rows that don't have a BSSID, channel, or signal strength
     df_beacons = df_beacons.dropna(subset=['bssid', 'channel', 'signal_strength'])
     df_beacons['channel'] = pd.to_numeric(df_beacons['channel'], errors='coerce')
     df_beacons['signal_strength'] = pd.to_numeric(df_beacons['signal_strength'], errors='coerce')
 
     # Compute average RSSI per AP
-    # Group beacons per AP (BSSID + channel) and compute average RSSI to get stable signal values(because there are flucturations),
+    # Group beacons per AP (BSSID + channel) and compute average RSSI (each AP--> avg_RSSI),
     # then we filter out weak APs below the RSSI threshold to focus only on those likely to cause interference
     avg_rssi_df = df_beacons.groupby(['bssid', 'channel'])['signal_strength'].mean().reset_index()
     avg_rssi_df = avg_rssi_df[avg_rssi_df['signal_strength'] > rssi_threshold]
     
-    # Mainly for the 5GHz home capture because beacons are fewer and weaker beacons so,
+    # Mainly for the 5GHz home capture because beacons are fewer and weaker   so,
     # it's unlikely to cause interference
     if avg_rssi_df.empty:
      print(" No APs with RSSI above threshold were found")
      pass
 
-    # Determine band (helper function-)---------------------------------------------------
+    # Determine band (helper function-)-----------------------------------------------------------
     def get_band(ch):
         if 1 <= ch <= 14:
             return '2.4GHz'
@@ -115,13 +116,13 @@ def rssi_based_overlap_index(csv_file, rssi_threshold=-70):
             return '5GHz'
         else:
             return 'unknown'
-    #-----------------------------------------------------------------------------------
+    #---------------------------------------------------------------------------------------------
 
 
     avg_rssi_df['band'] = avg_rssi_df['channel'].apply(get_band)
 
     
-    # overlap logic (helper function)--------------------------------------------------------
+    # overlap logic (helper function)-------------------------------------------------------------
     def get_overlapping_channels(ch, band):
         if band == '2.4GHz':
             if 1 <= ch <= 5:
@@ -133,12 +134,12 @@ def rssi_based_overlap_index(csv_file, rssi_threshold=-70):
             else:
                 return [ch]
         # No overlap in 5GHz, only same-channel counts 
-        # because in 5GHz Wi-Fi channels are non-overlapping by default    
+        # because in 5GHz Wi-Fi channels are non-overlapping assuming there is no channel bonding  
         elif band == '5GHz':
             return [ch]  
         else:
             return []
-    #----------------------------------------------------------------------------------------
+    #----------------------------------------------------------------------------------------------
 
     overlap_data = []
 
@@ -218,7 +219,7 @@ def compute_rssid_from_csv(csv_file):
 
     # Total RSSID across all APs
     total_rssid = rssid_values.sum()
-    print(f"Total RSSID (all APs): {total_rssid:.4f}")
+    print(f"\nTotal RSSID (all APs): {total_rssid:.4f}\n")
 
     return rssid_values, total_rssid
 
@@ -261,17 +262,25 @@ def phy_percentage(csv_file):
     
     print("PHY Type Distribution (per AP):")
     print(phy_counts)
+    print("\n")
 
     return phy_counts
-
-
-
-
 
 if __name__ == "__main__":
     # Calling the functions created above
     input_csv = 'wifi_packet_analysis.csv'
-    beacon_jitter_df = beacon_jitter_intervals(input_csv)
+    input_csv_single_channel = 'wifi_packet_analysis.csv'
+
+    print("\n== Beacon Jitter ==\n")
+    beacon_jitter_df = beacon_jitter_intervals(input_csv_single_channel)
+
+    print("\n== RSSI-Based Overlap Index ==\n")
     overlap_df, channel_summary = rssi_based_overlap_index(input_csv)
+
+    print("\n== RSSID ==\n")
     rssid_by_ap, total_rssid = compute_rssid_from_csv(input_csv)
+
+    print("\n== PHY Summary ==\n")
     phy_summary = phy_percentage(input_csv)
+
+    
