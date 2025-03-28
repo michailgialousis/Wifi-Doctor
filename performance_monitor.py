@@ -70,7 +70,7 @@ def beacon_jitter_intervals(csv_file, nominal_interval=0.100):
     
     return result_df
 
-def rssi_based_overlap_index(csv_file, rssi_threshold=-70):
+def rssi_based_overlap_index(csv_file, rssi_threshold=-75):
     """
     With Channel Hopping capture.
     Computes the average overlap index per channel and band.
@@ -202,7 +202,6 @@ def compute_rssid_from_csv(csv_file):
     # Filter for beacon frames (Wi-Fi Management subtype 0x0008)
     df_beacons = df[df['fc_type_subtype'] == "0x0008"].copy()
 
-
     # Convert signal strength to numeric
     df_beacons['signal_strength'] = pd.to_numeric(df_beacons['signal_strength'], errors='coerce')
     df_beacons = df_beacons.dropna(subset=['signal_strength'])
@@ -259,7 +258,6 @@ def phy_percentage(csv_file):
     total_aps = phy_counts['ap_count'].sum()
     phy_counts['percentage'] = (phy_counts['ap_count'] / total_aps * 100)
 
-    
     print("PHY Type Distribution (per AP):")
     print(phy_counts)
     print("\n")
@@ -268,8 +266,8 @@ def phy_percentage(csv_file):
 
 if __name__ == "__main__":
     # Calling the functions created above
-    input_csv = 'wifi_packet_analysis.csv'
-    input_csv_single_channel = 'wifi_packet_analysis.csv'
+    input_csv = '5_home.csv'
+    input_csv_single_channel = '5_home_one.csv'
 
     print("\n== Beacon Jitter ==\n")
     beacon_jitter_df = beacon_jitter_intervals(input_csv_single_channel)
