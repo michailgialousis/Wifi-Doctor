@@ -2,8 +2,9 @@ import pyshark
 import pandas as pd
 import datetime
 
-pcap_file = '/home/axynobiti/Downloads/riverwest_24.pcapng'
-# helper functions
+pcap_file = '/home/pavlos/Documents/captures_home_pavlos/2.4_home_pavlos.pcapng'
+
+# Helper functions
 def get_field(layer, attr):
     try:
         return getattr(layer, attr)
@@ -75,8 +76,8 @@ try:
     lambda x: datetime.datetime.fromtimestamp(x).strftime('%Y-%m-%d %H:%M:%S.%f')
 )
     # maybe use the file in libreoffice calc or excel
-    df.to_csv("wifi_packet_analysis.csv", index=False)
-    print("CSV saved as wifi_packet_analysis.csv")
+    df.to_csv("2.4_home.csv", index=False)
+    print("CSV saved.")
 
 except FileNotFoundError:
     print(f"Error: The file {pcap_file} was not found.")

@@ -266,8 +266,8 @@ def phy_percentage(csv_file):
 
 if __name__ == "__main__":
     # Calling the functions created above
-    input_csv = '5_home.csv'
-    input_csv_single_channel = '5_home_one.csv'
+    input_csv = '2.4_home.csv'
+    input_csv_single_channel = '2.4_home_one.csv'
 
     print("\n== Beacon Jitter ==\n")
     beacon_jitter_df = beacon_jitter_intervals(input_csv_single_channel)
