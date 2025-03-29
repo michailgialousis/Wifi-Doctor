@@ -53,7 +53,7 @@ def rate_gap(csv_file, max_mcs):
     # Calculate the average rate gap
     average_rate_gap = filtered_df['rate_gap'].mean()
 
-    return average_rate_gap
+    return average_rate_gap, filtered_df['rate_gap']
 
 #if __name__ == "__main__":
     #csv_file = 'HowIWiFi.csv'
