@@ -1,4 +1,6 @@
 import pandas as pd
+from math import log
+import numpy as np
 
 """
 Density Metrics:
@@ -264,6 +266,60 @@ def phy_percentage(csv_file):
 
     return phy_counts
 
+def phy_score(phy_df):
+    """
+    Computes the PHY score based on the distribution of PHY types.
+
+    Parameters:
+        phy_df (DataFrame): DataFrame containing PHY type distribution.
+
+    Returns:
+        float: The PHY score.
+    """
+
+    def log_normalize(data_rate):
+        """
+        Normalizes the data rate using a logarithmic scale.
+        """
+        return 1 - (np.log2(data_rate) - np.log2(11)) / (np.log2(10000) - np.log2(11))
+
+    # Define the PHY types and their corresponding data rates
+    phy_types = {
+        4: 11,
+        5: 54,
+        6: 54,
+        7: 300,
+        8: 7000,
+        9: 10000,
+    }
+
+    # Initialize the PHY score
+    phy_score = 0
+
+    # Iterate through each row in the DataFrame
+    for _, row in phy_df.iterrows():
+        phy_type = row['phy']
+        ap_count = row['ap_count']
+
+        # Get the data rate for the PHY type
+        data_rate = phy_types.get(phy_type, 0)
+
+        # Skip if PHY type is not recognized
+        if data_rate == 0:
+            continue
+
+        # Compute weight (1 for phy type 4, otherwise apply log_normalize)
+        weight =  log_normalize(data_rate)
+
+        # Add the weighted AP count to the total score
+        phy_score += ap_count * weight
+
+    print("PHY Score:")
+    print(phy_score)
+    print("\n")
+    
+    return phy_score
+
 def jitter_tot_avg(result_df):
     """
     Computes the average jitter value for all BSSIDs provided the DataFrame.
@@ -328,12 +384,9 @@ def overlap_tot_avg(result_df):
 
     return summary_df
 
-
-    
-
 if __name__ == "__main__":
     # Calling the functions created above
-    input_csv = '5_riverwest.csv'
+    input_csv = '5_home.csv'
     input_csv_single_channel = '5_home_one.csv'
 
     print("\n== Beacon Jitter ==\n")
@@ -350,5 +403,74 @@ if __name__ == "__main__":
 
     print("\n== PHY Summary ==\n")
     phy_summary = phy_percentage(input_csv)
+    phy_score(phy_summary)
+
+    ## Density Score 
+    """
+    We will call for each of our pcap files the functions created above and
+    compute the density score as follows:
+    Density Score = (Jitter Score + Overlap Index + RSSID + PHY Score) / 4
+    where each score is normalized to a scale of 0 to 1.
+    To normalize the scores, we can use min-max normalization:
+    normalized_score = (score - min_score) / (max_score - min_score)
+    where min_score and max_score are the minimum and maximum scores for that metric
+    across all captures.
+    The final density score will be a weighted average of the normalized scores:
+    Density Score = w1 * normalized_jitter + w2 * normalized_overlap + w3 * normalized_rssid + w4 * normalized_phy
+    where w1, w2, w3, and w4 are the weights for each metric.
+    The weights can be adjusted based on the importance of each metric in the overall density score.
+    In our case we will use equal weights for all metrics.
+    w1 = w2 = w3 = w4 = 0.25
+    """ 
+
+    # Initialize the arrays were we will store the scores
+    # for each of the metrics
+    bj = np.zeros(4)    # beacon jitter
+    ov = np.zeros(4)    # overlapping channels
+    rssid = np.zeros(4) # RSSID
+    phy = np.zeros(4)   # PHY score
+
+
+    files = ['2.4_home.csv', '2.4_riverwest.csv', '5_home.csv', '5_riverwest.csv']
+    files_one = ['2.4_home_one.csv', '2.4_riverwest_one.csv', '5_home_one.csv', '5_riverwest_one.csv']
+
+    for i, file in enumerate(files):
+    
+        overlap_df, channel_summary = rssi_based_overlap_index(file)
+        ov[i] = overlap_tot_avg(channel_summary)['avg_overlap_index'][0]
+
+        rssid_by_ap, total_rssid = compute_rssid_from_csv(file)
+        rssid[i] = total_rssid
+
+        phy_summary = phy_percentage(file)
+        phy[i] = phy_score(phy_summary)
+
+    for i, file in enumerate(files_one):
+        # Compute beacon jitter
+        beacon_jitter_df = beacon_jitter_intervals(file)
+        bj[i] = jitter_tot_avg(beacon_jitter_df)['avg_jitter_ms'][0]
+
+    for bj_, ov_, rssid_, phy_ in zip(bj, ov, rssid, phy):
+        # Normalize the scores
+        normalized_bj = (bj - min(bj)) / (max(bj) - min(bj))
+        normalized_ov = (ov - min(ov)) / (max(ov) - min(ov))
+        normalized_rssid = (rssid - min(rssid)) / (max(rssid) - min(rssid))
+        normalized_phy = (phy - min(phy)) / (max(phy) - min(phy))
+
+    # Compute the density score
+    bj_weight = 0.25
+    ov_weight = 0.25
+    rssid_weight = 0.25
+    phy_weight = 0.25
+
+    density_score = bj_weight * normalized_bj + ov_weight * normalized_ov + rssid_weight* normalized_rssid + phy_weight * normalized_phy
+    
+    # Set in 1 to 10 scale
+    density_score = (density_score * 9) + 1
+    print(f"Density Score: {density_score}")
+
+
+
+
 
     
