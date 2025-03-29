@@ -457,7 +457,9 @@ if __name__ == "__main__":
     
     # Set in 1 to 10 scale
     density_score = (density_score * 9) + 1
-    print(f"Density Score: {density_score}")
+    rounded_scores = np.round(density_score, decimals=2)  # Round to 2 decimal places
+    print(f"Density Score : {density_score}")
+    print(f"Rounded density score : {rounded_scores}")
 
 
 
