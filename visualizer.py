@@ -1,5 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
 from performance_monitor import beacon_jitter_intervals, rssi_based_overlap_index, overlap_tot_avg, compute_rssid_from_csv,jitter_tot_avg
 
 def plot_beacon_jitter(jitter_df, top_n=3, output_filename="beacon_jitter_top_n.png"):
@@ -52,8 +53,15 @@ def plot_avg_overlap(scenario_avgs, output_filename="average_overlap_index_compa
     scenarios = list(scenario_avgs.keys())
     values = [scenario_avgs[sc] for sc in scenarios]
     
+    # Ensure values are scalar
+    if any(isinstance(val, (list, np.ndarray)) for val in values):
+        raise ValueError("All values must be scalar (not lists or arrays).")
+    
     plt.figure(figsize=(10, 6))
-    plt.bar(scenarios, values, color=["blue", "green", "orange", "red"], edgecolor="black")
+
+    colors = ["blue", "green", "orange", "red"]
+    plt.bar(scenarios, values, color=colors[:len(scenarios)], edgecolor="black")
+
     plt.xlabel("Scenario")
     plt.ylabel("Average Overlap Index")
     plt.title("Average Overlap Index per Scenario")

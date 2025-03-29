@@ -367,22 +367,12 @@ def overlap_tot_avg(result_df):
         DataFrame: A summary with:
             - avg_overlap_index (float): The average overlap index.
     """
-    # Ensure the DataFrame contains the necessary columns
-    if 'avg_overlap_index' not in result_df.columns:
-        raise ValueError("The result DataFrame must contain 'avg_overlap_index' column.")
+    
 
     # Compute the average overlap index
     avg_overlap_index = result_df['avg_overlap_index'].mean()
     
-    # Create a summary DataFrame
-    summary_df = pd.DataFrame({
-        'avg_overlap_index': [avg_overlap_index]
-    })
-
-    print("Average Overlap Index Summary:")
-    print(summary_df)
-
-    return summary_df
+    return avg_overlap_index
 
 if __name__ == "__main__":
     # Calling the functions created above
@@ -437,7 +427,7 @@ if __name__ == "__main__":
     for i, file in enumerate(files):
     
         overlap_df, channel_summary = rssi_based_overlap_index(file)
-        ov[i] = overlap_tot_avg(channel_summary)['avg_overlap_index'][0]
+        ov[i] = overlap_tot_avg(channel_summary)
 
         rssid_by_ap, total_rssid = compute_rssid_from_csv(file)
         rssid[i] = total_rssid
