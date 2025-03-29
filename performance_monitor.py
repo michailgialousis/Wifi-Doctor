@@ -457,7 +457,11 @@ if __name__ == "__main__":
     
     # Set in 1 to 10 scale
     density_score = (density_score * 9) + 1
-    print(f"Density Score: {density_score}")
+    print(f"\n=============== Density Scores ===============\n")
+    print(f"Density score for 2.4_home : {density_score[0]}")
+    print(f"Density score for 2.4_enterprise : {density_score[1]}")
+    print(f"Density score for 5_home : {density_score[2]}")
+    print(f"Density score for 5_enterprise : {density_score[3]}")
 
 
 
