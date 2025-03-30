@@ -371,6 +371,7 @@ def overlap_tot_avg(result_df):
 
     # Compute the average overlap index
     avg_overlap_index = result_df['avg_overlap_index'].mean()
+    print(f"\nAverage Overlap Index:",avg_overlap_index)
     
     return avg_overlap_index
 
@@ -385,9 +386,9 @@ def throughput_comp(csv_file):
       - 'retry'  (to identify retried frames)
     
     Applies filter conditions:
-      - fc_type == 2
-      - ta equals "2C:F8:9B:DD:06:A0"
-      - ra equals "00:20:A6:FC:B0:36"
+      - fc_type 
+      - ta 
+      - ra 
     
     Computes:
       1) frame_loss_rate (retry ratio) for the filtered frames
@@ -526,12 +527,12 @@ if __name__ == "__main__":
     
     # Set in 1 to 10 scale
     density_score = (density_score * 9) + 1
-    print(f"\n=============== Density Scores ===============\n")
+    print(f"\n=============== Density Scores (1 - 10) ===============\n")
     print(f"Density score for 2.4_home : {np.round(density_score[0],4)}")
     print(f"Density score for 2.4_enterprise : {np.round(density_score[1],4)}")
     print(f"Density score for 5_home : {np.round(density_score[2],4)}")
     print(f"Density score for 5_enterprise : {np.round(density_score[3],4)}\n")
-    print(f"\n==============================================\n")
+    print(f"\n====================== Frame Loss Rate ========================\n")
 
     csv_file = 'mikehome1.csv'
     
@@ -541,10 +542,6 @@ if __name__ == "__main__":
     if not result_df.empty:
         print("\n======= Throughput per Packet =======\n")
         print(result_df[['data_rate', 'throughput']])
-
-        print("\n======= Frame Loss Rate =======\n")
-        # You can also access the computed loss rate outside the function:
-        print(f"Computed Frame Loss Rate = {computed_loss_rate:.2%}")
         
         # Print the average throughput
         avg_throughput = result_df['throughput'].mean()
