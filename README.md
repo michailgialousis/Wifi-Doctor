@@ -1,4 +1,4 @@
-# 📡 WiFi Doctor 
+# WiFi Doctor 
 
 **WiFi Doctor** is a Python tool that helps you monitor, analyze, and visualize your Wi-Fi network. Its main purposes include:
 
