@@ -10,7 +10,12 @@
 
 ## Description
 
-An in-depth paragraph about your project and overview of use.
+The goal of this project is to design and implement a Wi-Fi network performance monitoring
+system. By capturing and analyzing Wi-Fi packets across various setups, we are able to assess
+network performance and identify the underlying factors influencing its quality. We observed
+that either transitioning from the 2.4 GHz band to the 5 GHz band or operating in a home
+environment instead of an enterprise setup significantly improves Wi-Fi density. Furthermore,
+we identified the key factors that hinder throughput and data rate performance.
 
 ## Dependencies
 
