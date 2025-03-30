@@ -526,11 +526,6 @@ if __name__ == "__main__":
     
     # Set in 1 to 10 scale
     density_score = (density_score * 9) + 1
-<<<<<<< HEAD
-    rounded_scores = np.round(density_score, decimals=2)  # Round to 2 decimal places
-    print(f"Density Score : {density_score}")
-    print(f"Rounded density score : {rounded_scores}")
-=======
     print(f"\n=============== Density Scores ===============\n")
     print(f"Density score for 2.4_home : {np.round(density_score[0],4)}")
     print(f"Density score for 2.4_enterprise : {np.round(density_score[1],4)}")
@@ -558,7 +553,6 @@ if __name__ == "__main__":
         
     else:
         print("No matching packets found with the specified filters.")
->>>>>>> 1871ffebd33f6eec7a2e0bead6fdba6f18e9f2d9
 
 
 
