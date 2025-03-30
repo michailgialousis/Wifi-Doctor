@@ -1,13 +1,11 @@
-# Wifi-Doctor
+# WiFI - Doctor
 
-# pcap_parser.py
+Simple overview of use/purpose.
 
-The parser takes as input a file and converts it to .csv 
+## Description
 
-We have done this for all of our pcaps and we have the .csv files uploaded
+An in-depth paragraph about your project and overview of use.
 
-# performance_monitor.py
+## Dependencies
 
-# perfomance_analyzer.py
 
-# visualizer.py
