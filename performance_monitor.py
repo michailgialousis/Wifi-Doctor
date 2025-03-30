@@ -3,11 +3,21 @@ from math import log
 import numpy as np
 
 """
+
+
 Density Metrics:
 1)Beacon Jitter
 2)Overlapping Channels given a strong RSSI(capable of interference)
 3)RSSID source paper [3] 
 4)PHY type percentage (old phy types may create congestion)
+---------------------------------------------------------------------------
+5) phy_score : creating a score for the phy type
+6)overlap_tot_avg : computing average overlap to use in score and plotting
+7)throughput_comp : computing throughput and frame loss rate
+8)main : computing density score from all the above metrics
+---------------------------------------------------------------------------
+
+
 
 """
 
@@ -375,31 +385,25 @@ def overlap_tot_avg(result_df):
     
     return avg_overlap_index
 
-def throughput_comp(csv_file):
+def throughput_comp (csv_file, time_interval=1):
     """
-    Reads a CSV file containing packet data with the following columns:
-      - 'data_rate' (in Mbps)
-      - 'timestamp_wireshark'
-      - 'fc_type'
-      - 'ta'
-      - 'ra'
-      - 'retry'  (to identify retried frames)
-    
-    Applies filter conditions:
-      - fc_type 
-      - ta 
-      - ra 
-    
-    Computes:
-      1) frame_loss_rate (retry ratio) for the filtered frames
-      2) throughput for each packet:
-           throughput = data_rate * (1 - frame_loss_rate)
-    
+    Reads a CSV file containing packet data and computes:
+      1) Overall frame loss rate (retry ratio).
+      2) Throughput for each packet. [throughput = data_rate * (1 - frame_loss_rate)]
+      3) Frame losses over time (grouped by time intervals).
+
+    Parameters:
+        csv_file (str): Path to the CSV file.
+        time_interval (int): Time interval (in seconds) for grouping frame losses.
+
     Returns:
-        (DataFrame, float): A tuple of:
-            - Filtered DataFrame with an added 'throughput' column
-            - The computed frame_loss_rate
+        (DataFrame, float, DataFrame): A tuple of:
+            - Filtered DataFrame with added 'throughput' and 'frame_loss' columns.
+            - The computed overall frame_loss_rate.
+            - A DataFrame with frame losses over time.
+    
     """
+
     # Load the CSV file
     df = pd.read_csv(csv_file)
     
@@ -414,7 +418,7 @@ def throughput_comp(csv_file):
     
     # Convert fc_type to numeric if necessary
     df['fc_type'] = pd.to_numeric(df['fc_type'], errors='coerce')
-    
+
     # Normalize MAC addresses (ta and ra) to uppercase and strip whitespace
     df['ta'] = df['ta'].str.upper().str.strip()
     df['ra'] = df['ra'].str.upper().str.strip()
@@ -452,11 +456,40 @@ def throughput_comp(csv_file):
     
     # Compute throughput per packet (in Mbps)
     df_filtered.loc[:, 'throughput'] = df_filtered['data_rate'] * (1 - frame_loss_rate)
+
+    # Add a column for frame losses (binary: 1 for retried frames, 0 otherwise)
+    df_filtered.loc[:, 'frame_loss'] = df_filtered['retry']
+
+    # Calculate frame losses over time
+    df_filtered['time_bin'] = (df_filtered['timestamp_wireshark'] // time_interval).astype(int)
+    frame_losses_over_time = df_filtered.groupby('time_bin')['frame_loss'].sum().reset_index()
+    frame_losses_over_time.columns = ['time_bin', 'frame_losses']
+
+    return df_filtered, frame_loss_rate, frame_losses_over_time
+
     
-    return df_filtered, frame_loss_rate
 
 if __name__ == "__main__":
+    # Calling the functions created above
+    input_csv = '5_home.csv'
+    input_csv_single_channel = '5_home_one.csv'
+
+    print("\n== Beacon Jitter ==\n")
+    beacon_jitter_df = beacon_jitter_intervals(input_csv_single_channel)
+    jitter_tot_avg(beacon_jitter_df)
     
+
+    print("\n== RSSI-Based Overlap Index ==\n")
+    overlap_df, channel_summary = rssi_based_overlap_index(input_csv)
+    overlap_tot_avg(channel_summary)
+
+    print("\n== RSSID ==\n")
+    rssid_by_ap, total_rssid = compute_rssid_from_csv(input_csv)
+
+    print("\n== PHY Summary ==\n")
+    phy_summary = phy_percentage(input_csv)
+    phy_score(phy_summary)
+
     ## Density Score 
     """
     We will call for each of our pcap files the functions created above and
@@ -537,7 +570,7 @@ if __name__ == "__main__":
     csv_file = 'mikehome1.csv'
     
     # Capture both the filtered DataFrame and the computed frame_loss_rate
-    result_df, computed_loss_rate = throughput_comp(csv_file)
+    result_df, computed_loss_rate, frame_losses_over_time = throughput_comp(csv_file)
     
     if not result_df.empty:
         print("\n======= Throughput per Packet =======\n")
