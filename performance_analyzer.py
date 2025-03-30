@@ -43,9 +43,9 @@ def rate_gap(csv_file, max_mcs):
     # Filter the DataFrame for packets with MCS index and the specified conditions
     filtered_df = df[
         (df['fc_type'] == 2) &
-        (df['ta'] == "2C:F8:9B:DD:06:A0") &
-        (df['ra'] == "00:20:A6:FC:B0:36") &
-        df['mcs_index'].notna()    # ensure mcs_index is present
+        (df['ta'] == "E0:B6:68:1B:B4:CF") &
+        (df['ra'] == "2C:3B:70:58:39:5D")&
+        df['mcs_index']!=0  # ensure mcs_index is present
     ].copy()
 
     print(f"Filtered DataFrame shape: {filtered_df.shape}")
@@ -60,15 +60,12 @@ def rate_gap(csv_file, max_mcs):
     result_df = filtered_df[['timestamp_wireshark', 'rate_gap']]
 
     return result_df
-
-
-
 def filter_downlink_frames_values(csv_file):
     """
     Reads the CSV file at `csv_file`, filters it for data frames (fc_type == 2)
     where:
-      - ta == '2C:F8:98:DD:06:A0' (transmitter)
-      - ra == '00:20:A6:FC:B0:36' (receiver)
+      - ta == 'E0:B6:68:1B:B4:CF'(transmitter)
+      - ra == '2C:3B:70:58:39:5D' (receiver)
 
     Returns a DataFrame with just the columns:
       - timestamp_wireshark
@@ -76,16 +73,16 @@ def filter_downlink_frames_values(csv_file):
       - data_rate
     """
 
-    # 1) Read the CSV into a DataFrame
+    # Read the CSV into a DataFrame
     df = pd.read_csv(csv_file)
 
-    # 2) Ensure columns exist
+    # Ensure columns exist
     required_cols = ['timestamp_wireshark', 'fc_type', 'ta', 'ra', 'signal_strength', 'data_rate']
     for col in required_cols:
         if col not in df.columns:
             raise ValueError(f"CSV must contain a '{col}' column.")
 
-    # 3) Convert relevant columns to numeric (in case they're strings)
+    # Convert relevant columns to numeric (in case they're strings)
     df['fc_type'] = pd.to_numeric(df['fc_type'], errors='coerce')
     df['data_rate'] = pd.to_numeric(df['data_rate'], errors='coerce')
     df['signal_strength'] = pd.to_numeric(df['signal_strength'], errors='coerce')
@@ -96,13 +93,13 @@ def filter_downlink_frames_values(csv_file):
 
     print(f"Initial DataFrame shape: {df.shape}")
 
-    # Filter the DataFrame for packets with MCS index and the specified conditions
+    # Filter the DataFrame for packets matching the filter criteria
     filtered_df = df[
         (df['fc_type'] == 2) &
-        (df['ta'] == "2C:F8:9B:DD:06:A0") &
-        (df['ra'] == "00:20:A6:FC:B0:36")
+        (df['ta'] == "E0:B6:68:1B:B4:CF") &
+        (df['ra'] == "2C:3B:70:58:39:5D")
     ]
-    # 6) Return only the columns of interest
+    # wanted values
     columns_of_interest = [
         'timestamp_wireshark',
         'signal_strength',
@@ -110,7 +107,7 @@ def filter_downlink_frames_values(csv_file):
     ]
     result_df = filtered_df [columns_of_interest]
 
-    # 7) Optional: Print or preview the first rows
+    # testing
     if not result_df.empty:
         print("Filtered results (first 5 rows):")
         print(result_df.head())
@@ -120,10 +117,10 @@ def filter_downlink_frames_values(csv_file):
     return result_df
 
 if __name__ == "__main__":
-    csv_file = 'HowIWiFi.csv'
-    max_mcs = 15  # Example maximum MCS index
+    csv_file = 'mikehome1.csv'
+    max_mcs = 15  # maximum MCS index found from wireshark
     average_gap = rate_gap(csv_file, max_mcs)
     print(average_gap)
   
-    filtered_df = filter_downlink_frames_values("HowIWiFi.csv")
+    filtered_df = filter_downlink_frames_values("mikehome1.csv")
     print(filtered_df)

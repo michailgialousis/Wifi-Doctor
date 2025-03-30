@@ -4,13 +4,15 @@ import datetime
 
 pcap_file = '/home/pavlos/Documents/captures_home_pavlos/2.4_home_pavlos.pcapng'
 
-# Helper functions
+
+# Helper function to get fields from pyshark layers
 def get_field(layer, attr):
     try:
         return getattr(layer, attr)
     except Exception:
         return None
-
+    
+# Helper function to get raw fields from pyshark layers 
 def get_raw_field(packet, layername, key):
     try:
         return packet[layername]._all_fields.get(key)
@@ -19,16 +21,12 @@ def get_raw_field(packet, layername, key):
 
 # Store parsed data here
 packet_data = []
-unique_fields = set()
-
 
 try:
     cap = pyshark.FileCapture(pcap_file, only_summaries=False, use_json=False)
 
     for i, packet in enumerate(cap):
-        
-        if i >= 30000:
-         break
+   
 
         # Special treatment for timestamp otherwise it doesnt recognize fixed_timestamp from layer wlan.mgt
         tsf_timestamp = None
@@ -62,7 +60,7 @@ try:
             "bandwidth": get_raw_field(packet, 'wlan_radio', 'wlan_radio.11ac.bandwidth'),
             "mcs_index": get_raw_field(packet, 'radiotap', 'radiotap.mcs.index'),
             "tsf_timestamp": tsf_timestamp, # in wireshark its inside wifi manager its the APs timestamp 
-            "timestamp_wireshark" : float(packet.frame_info.time_epoch), # for beacon jitter!!!
+            "timestamp_wireshark" : float(packet.frame_info.time_epoch), # for beacon jitter and plotting
         }
 
         # Append the packet data
