@@ -1,3 +1,5 @@
+import os
+
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
@@ -121,7 +123,8 @@ def plot_avg_jitter(scenario_avg_jitter, output_filename="avg_jitter.png"):
 
 
 
-
+def clear_terminal():
+    os.system('cls' if os.name == 'nt' else 'clear')
 
 
 if __name__ == "__main__":
@@ -196,6 +199,13 @@ if __name__ == "__main__":
    
 
     # plots for each scenario-----------------------------------------------------------------------------------------------------
+    
+
+    
+
+    # Call the function to clear the termindef clear_terminal():
+    os.system('cls' if os.name == 'nt' else 'clear')
+    clear_terminal()
 
     # jitter
     plot_beacon_jitter(beacon_jitter_df_5h, top_n=2, output_filename="beacon_jitter_5_home.png")
