@@ -1,14 +1,12 @@
-# WiFI - Doctor
+# 📡 WiFi Doctor 
 
-WiFi Doctor is a Python tool that helps you monitor, analyze, and visualize your Wi-Fi network , with purposes :
+**WiFi Doctor** is a Python tool that helps you monitor, analyze, and visualize your Wi-Fi network. Its main purposes include:
 
-    (i) Scan nearby Wi-Fi networks
+1. **Scanning** nearby Wi-Fi networks  
+2. **Analyzing** signal strength, channel overlap, and network traffic  
+3. **Detecting** performance issues such as jitter, interference, or congestion  
+4. **Visualizing** network performance over time
 
-    (ii) Analyze signal strength, channel overlap, and traffic
-
-    (iii) Detect performance issues like jitter, interference, or congestion
-
-    (iv) Visualize network performance over time
 
 ## Description
 
