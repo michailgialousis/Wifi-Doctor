@@ -176,6 +176,7 @@ def rssi_based_overlap_index(csv_file, rssi_threshold=-75):
     summary = overlap_df.groupby(['band', 'channel'])['overlapping_ap_count'].mean().reset_index()
     summary.columns = ['band', 'channel', 'avg_overlap_index']
 
+    print("\n")
     print("Average Overlap Index per Channel (by band):")
     print(summary)
 
@@ -220,7 +221,7 @@ def compute_rssid_from_csv(csv_file):
 
     # Total RSSID across all APs
     total_rssid = rssid_values.sum()
-    print(f"\nTotal RSSID (all APs): {total_rssid:.4f}\n")
+    print(f"\nTotal RSSID (all APs): {total_rssid:.4f}")
 
     return rssid_values, total_rssid
 
@@ -316,7 +317,6 @@ def phy_score(phy_df):
 
     print("PHY Score:")
     print(phy_score)
-    print("\n")
     
     return phy_score
 
@@ -374,27 +374,88 @@ def overlap_tot_avg(result_df):
     
     return avg_overlap_index
 
-if __name__ == "__main__":
-    # Calling the functions created above
-    input_csv = '5_home.csv'
-    input_csv_single_channel = '5_home_one.csv'
-
-    print("\n== Beacon Jitter ==\n")
-    beacon_jitter_df = beacon_jitter_intervals(input_csv_single_channel)
-    jitter_tot_avg(beacon_jitter_df)
+def throughput_comp(csv_file):
+    """
+    Reads a CSV file containing packet data with the following columns:
+      - 'data_rate' (in Mbps)
+      - 'timestamp_wireshark'
+      - 'fc_type'
+      - 'ta'
+      - 'ra'
+      - 'retry'  (to identify retried frames)
     
+    Applies filter conditions:
+      - fc_type == 2
+      - ta equals "2C:F8:9B:DD:06:A0"
+      - ra equals "00:20:A6:FC:B0:36"
+    
+    Computes:
+      1) frame_loss_rate (retry ratio) for the filtered frames
+      2) throughput for each packet:
+           throughput = data_rate * (1 - frame_loss_rate)
+    
+    Returns:
+        (DataFrame, float): A tuple of:
+            - Filtered DataFrame with an added 'throughput' column
+            - The computed frame_loss_rate
+    """
+    # Load the CSV file
+    df = pd.read_csv(csv_file)
+    
+    # Check for required columns
+    required_cols = [
+        'data_rate', 'timestamp_wireshark',
+        'fc_type', 'ta', 'ra', 'retry'
+    ]
+    for col in required_cols:
+        if col not in df.columns:
+            raise ValueError(f"CSV file must contain a '{col}' column.")
+    
+    # Convert fc_type to numeric if necessary
+    df['fc_type'] = pd.to_numeric(df['fc_type'], errors='coerce')
+    
+    # Normalize MAC addresses (ta and ra) to uppercase and strip whitespace
+    df['ta'] = df['ta'].str.upper().str.strip()
+    df['ra'] = df['ra'].str.upper().str.strip()
+    
+    # Filter: data frames of interest
+    df_filtered = df[
+        (df['fc_type'] == 2) &
+        (df['ta'] == "E0:B6:68:1B:B4:CF") &
+        (df['ra'] == "2C:3B:70:58:39:5D")
+    ]
 
-    print("\n== RSSI-Based Overlap Index ==\n")
-    overlap_df, channel_summary = rssi_based_overlap_index(input_csv)
-    overlap_tot_avg(channel_summary)
+    # Filter further for retried frames
+    df_filtered_retry = df_filtered[df_filtered['retry'] == 1]
 
-    print("\n== RSSID ==\n")
-    rssid_by_ap, total_rssid = compute_rssid_from_csv(input_csv)
+    # Compute frame_loss_rate
+    total_data_frames = len(df_filtered)
+    retried_data_frames = len(df_filtered_retry)
+    if total_data_frames > 0:
+        frame_loss_rate = retried_data_frames / total_data_frames
+    else:
+        frame_loss_rate = 0.0
 
-    print("\n== PHY Summary ==\n")
-    phy_summary = phy_percentage(input_csv)
-    phy_score(phy_summary)
+    print(f"Total data frames: {total_data_frames}")
+    print(f"Retried data frames: {retried_data_frames}")
+    print(f"Frame loss rate: {frame_loss_rate:.2%}")
 
+    # Convert data_rate and timestamp_wireshark to numeric
+    df_filtered.loc[:, 'data_rate'] = pd.to_numeric(
+        df_filtered['data_rate'], errors='coerce'
+    )
+    df_filtered.loc[:, 'timestamp_wireshark'] = pd.to_numeric(
+        df_filtered['timestamp_wireshark'], errors='coerce'
+    )
+    df_filtered = df_filtered.dropna(subset=['data_rate', 'timestamp_wireshark'])
+    
+    # Compute throughput per packet (in Mbps)
+    df_filtered.loc[:, 'throughput'] = df_filtered['data_rate'] * (1 - frame_loss_rate)
+    
+    return df_filtered, frame_loss_rate
+
+if __name__ == "__main__":
+    
     ## Density Score 
     """
     We will call for each of our pcap files the functions created above and
@@ -420,23 +481,31 @@ if __name__ == "__main__":
     rssid = np.zeros(4) # RSSID
     phy = np.zeros(4)   # PHY score
 
-
     files = ['2.4_home.csv', '2.4_riverwest.csv', '5_home.csv', '5_riverwest.csv']
     files_one = ['2.4_home_one.csv', '2.4_riverwest_one.csv', '5_home_one.csv', '5_riverwest_one.csv']
 
     for i, file in enumerate(files):
-    
+        
+        metric = file.replace('.csv', '')
+        print("\n===========================================================================================")
+        print("\nMetrics for :", metric)
+        print("\n")
         overlap_df, channel_summary = rssi_based_overlap_index(file)
         ov[i] = overlap_tot_avg(channel_summary)
-
+        print("\n")
         rssid_by_ap, total_rssid = compute_rssid_from_csv(file)
         rssid[i] = total_rssid
-
+        print("\n")
         phy_summary = phy_percentage(file)
         phy[i] = phy_score(phy_summary)
+        print("\n")
 
     for i, file in enumerate(files_one):
         # Compute beacon jitter
+        metric = file.replace('.csv', '')
+        print("\n===========================================================================================")
+        print("\nMetrics for :", metric)
+        print("\n")
         beacon_jitter_df = beacon_jitter_intervals(file)
         bj[i] = jitter_tot_avg(beacon_jitter_df)['avg_jitter_ms'][0]
 
@@ -458,10 +527,32 @@ if __name__ == "__main__":
     # Set in 1 to 10 scale
     density_score = (density_score * 9) + 1
     print(f"\n=============== Density Scores ===============\n")
-    print(f"Density score for 2.4_home : {density_score[0]}")
-    print(f"Density score for 2.4_enterprise : {density_score[1]}")
-    print(f"Density score for 5_home : {density_score[2]}")
-    print(f"Density score for 5_enterprise : {density_score[3]}")
+    print(f"Density score for 2.4_home : {np.round(density_score[0],4)}")
+    print(f"Density score for 2.4_enterprise : {np.round(density_score[1],4)}")
+    print(f"Density score for 5_home : {np.round(density_score[2],4)}")
+    print(f"Density score for 5_enterprise : {np.round(density_score[3],4)}\n")
+    print(f"\n==============================================\n")
+
+    csv_file = 'mikehome1.csv'
+    
+    # Capture both the filtered DataFrame and the computed frame_loss_rate
+    result_df, computed_loss_rate = throughput_comp(csv_file)
+    
+    if not result_df.empty:
+        print("\n======= Throughput per Packet =======\n")
+        print(result_df[['data_rate', 'throughput']])
+
+        print("\n======= Frame Loss Rate =======\n")
+        # You can also access the computed loss rate outside the function:
+        print(f"Computed Frame Loss Rate = {computed_loss_rate:.2%}")
+        
+        # Print the average throughput
+        avg_throughput = result_df['throughput'].mean()
+        print("\n======= Average Throughput =======\n")
+        print(f"Average Throughput: {avg_throughput:.2f} Mbps\n")
+        
+    else:
+        print("No matching packets found with the specified filters.")
 
 
 
